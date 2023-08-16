@@ -1,0 +1,10 @@
+C:\Users\Admin\Documents\Projects\SecurePNG\bin\Debug\SecurePNG.exe.config
+C:\Users\Admin\Documents\Projects\SecurePNG\bin\Debug\SecurePNG.exe
+C:\Users\Admin\Documents\Projects\SecurePNG\bin\Debug\SecurePNG.pdb
+C:\Users\Admin\Documents\Projects\SecurePNG\obj\Debug\SecurePNG.csproj.AssemblyReference.cache
+C:\Users\Admin\Documents\Projects\SecurePNG\obj\Debug\SecurePNG.Properties.Resources.resources
+C:\Users\Admin\Documents\Projects\SecurePNG\obj\Debug\SecurePNG.csproj.GenerateResource.cache
+C:\Users\Admin\Documents\Projects\SecurePNG\obj\Debug\SecurePNG.csproj.CoreCompileInputs.cache
+C:\Users\Admin\Documents\Projects\SecurePNG\obj\Debug\SecurePNG.exe
+C:\Users\Admin\Documents\Projects\SecurePNG\obj\Debug\SecurePNG.pdb
+C:\Users\Admin\Documents\Projects\SecurePNG\obj\Debug\SecurePNG.Form1.resources
