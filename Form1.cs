@@ -6,11 +6,14 @@ using System.IO;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.Diagnostics;
+using Microsoft.VisualBasic;
 
 namespace SecurePNG
 {
     public partial class Form1 : Form
     {
+        private string secretKey;
+
         public Form1()
         {
             InitializeComponent();
@@ -48,8 +51,6 @@ namespace SecurePNG
                         }
 
                         pictureBox1.Image = System.Drawing.Image.FromFile(filePath);
-
-                        MessageBox.Show("File encrypted and saved as:\n" + outputFilePath, "Encryption Successful", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     }
                 }
                 catch (Exception ex)
@@ -348,6 +349,122 @@ namespace SecurePNG
                 {
                     MessageBox.Show("The folder path is not valid or does not exist.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
+            }
+        }
+
+        public void HandleDroppedFiles(string[] files)
+        {
+            if (files.Length == 0)
+            {
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(secretKey))
+            {
+                secretKey = Interaction.InputBox("Enter the key:", "Enter Key");
+                if (string.IsNullOrWhiteSpace(secretKey))
+                {
+                    MessageBox.Show("Key cannot be empty!", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+            }
+
+            foreach (string file in files)
+            {
+                string extension = Path.GetExtension(file).ToLower();
+
+                if (extension == ".png")
+                {
+                    EncryptAndSaveAsSPNG(file);
+                }
+                else if (extension == ".spng")
+                {
+                    DecryptAndDisplaySPNG(file);
+                }
+                else
+                {
+                    MessageBox.Show("Unsupported file format.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
+        }
+
+        private void EncryptAndSaveAsSPNG(string filePath)
+        {
+            try
+            {
+                using (SHA256 sha256 = SHA256.Create())
+                {
+                    byte[] hashedKey = sha256.ComputeHash(Encoding.UTF8.GetBytes(secretKey));
+                    byte[] aesKey = new byte[16];
+                    Array.Copy(hashedKey, aesKey, 16);
+
+                    byte[] encryptedBytes = EncryptFileAES(filePath, aesKey);
+
+                    string outputFilePath = Path.GetDirectoryName(filePath) + "\\" + Path.GetFileNameWithoutExtension(filePath) + "_Enrypted.spng";
+
+                    using (FileStream outputFileStream = new FileStream(outputFilePath, FileMode.Create))
+                    {
+                        byte[] spngHeader = Encoding.UTF8.GetBytes("SPNG");
+                        outputFileStream.Write(spngHeader, 0, spngHeader.Length);
+                        outputFileStream.Write(encryptedBytes, 0, encryptedBytes.Length);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("An error occurred:\n" + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void DecryptAndDisplaySPNG(string filePath)
+        {
+            try
+            {
+                using (FileStream fs = new FileStream(filePath, FileMode.Open))
+                {
+                    byte[] header = new byte[4];
+                    fs.Read(header, 0, header.Length);
+                    string headerStr = Encoding.UTF8.GetString(header);
+
+                    if (headerStr == "SPNG")
+                    {
+                        byte[] encryptedBytes = new byte[fs.Length - 4];
+                        fs.Read(encryptedBytes, 0, encryptedBytes.Length);
+
+                        using (SHA256 sha256 = SHA256.Create())
+                        {
+                            byte[] hashedKey = sha256.ComputeHash(Encoding.UTF8.GetBytes(secretKey));
+                            byte[] aesKey = new byte[16];
+                            Array.Copy(hashedKey, aesKey, 16);
+
+                            try
+                            {
+                                byte[] decryptedBytes = DecryptBytesAES(encryptedBytes, aesKey);
+
+                                string outputFilePath = Path.GetDirectoryName(filePath) + "\\" + Path.GetFileNameWithoutExtension(filePath) + "_Decrypted.png";
+
+                                using (MemoryStream ms = new MemoryStream(decryptedBytes))
+                                {
+                                    Image decryptedImage = Image.FromStream(ms);
+
+                                    decryptedImage.Save(outputFilePath, ImageFormat.Png);
+                                }
+                            }
+                            catch (CryptographicException)
+                            {
+                                MessageBox.Show("Invalid key. Decryption failed.", "Decryption Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        MessageBox.Show("Invalid SPNG file.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("An error occurred:\n" + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
     }
